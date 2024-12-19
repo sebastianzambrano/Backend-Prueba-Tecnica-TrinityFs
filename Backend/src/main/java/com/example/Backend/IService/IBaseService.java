@@ -1,7 +1,6 @@
 package com.example.Backend.IService;
 
 import com.example.Backend.Entity.Auditoria;
-
 import java.util.List;
 
 public interface IBaseService <T extends Auditoria> {

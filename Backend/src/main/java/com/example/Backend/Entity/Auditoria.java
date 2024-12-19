@@ -10,25 +10,25 @@ public abstract class Auditoria {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "state", nullable = false)
+    @Column(name = "state")
     private Boolean state;
-    @Schema(description = "Fecha de creación del dato", example = "")
-    @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "DATETIME")
+    @Schema(description = "Fecha de creación del dato")
+    @Column(name = "fecha_creacion", nullable = false, updatable = false, columnDefinition = "DATETIME")
     private LocalDateTime createdAt;
-    @Schema(description = "Fecha de actualización del dato", example = "")
-    @Column(name = "updated_at", nullable = false, columnDefinition = "DATETIME")
+    @Schema(description = "Fecha de actualización del dato")
+    @Column(name = "fecha_modificacion", nullable = false, columnDefinition = "DATETIME")
     private LocalDateTime updatedAt;
-    @Schema(description = "Usuario cración", example = "")
-    @Column(name="created_user", nullable = true)
+    @Schema(description = "Usuario cración")
+    @Column(name="usuario_creacion")
     private Long createdUser;
-    @Schema(description = "Usuario modificación", example = "")
-    @Column(name="updated_user", nullable = true)
+    @Schema(description = "Usuario modificación")
+    @Column(name="usuario_modificacion")
     private Long updatedUser;
-    @Schema(description = "Usuarios eliminación", example = "")
-    @Column(name="deleted_user", nullable = true)
+    @Schema(description = "Usuarios eliminación")
+    @Column(name="usuario_eliminacion")
     private Long deletedUser;
-    @Schema(description = "Fecha de eliminación del dato", example = "")
-    @Column(name = "deleted_at", nullable = true, columnDefinition = "DATETIME")
+    @Schema(description = "Fecha de eliminación del dato")
+    @Column(name = "fecha_eliminacion", columnDefinition = "DATETIME")
     private LocalDateTime deletedAt;
 
     @PrePersist
