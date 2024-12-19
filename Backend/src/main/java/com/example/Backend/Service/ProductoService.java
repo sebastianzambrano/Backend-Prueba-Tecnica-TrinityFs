@@ -67,10 +67,11 @@ public class ProductoService extends BaseService<Producto> implements IProductoS
     @Transactional
     @Override
     public void delete(Long id)throws Exception{
-        System.out.println("ingreso a al operacion de eliminación");
+
         Optional<Producto> op = repository.findById(id); // Usa el repositorio específico
 
         if (op.isEmpty() || op.get().getState() == false) {
+            System.out.println("Producto no encontrado o está inactivo. Producto: " + op.orElse(null));
             throw new Exception("Producto no encontrado");
         }
 
@@ -79,7 +80,7 @@ public class ProductoService extends BaseService<Producto> implements IProductoS
         producto.setDeletedAt(LocalDateTime.now());
         producto.setEstado(EstadoProducto.CANCELADA);
         producto.setState(false);
-        super.delete(id);
+        repository.deleteById(id);
     }
 
     @Override
@@ -123,6 +124,11 @@ public class ProductoService extends BaseService<Producto> implements IProductoS
         Long tipoOperacion = transaccion.getTipoOperacion().getId();
         BigDecimal valorOperacion = transaccion.getValor();
         BigDecimal saldoCuentaProductoDebito = findSaldoByNumeroCuenta(transaccion.getProductoDebito().getNumeroCuenta());
+
+        if (saldoCuentaProductoDebito == null) {
+            saldoCuentaProductoDebito = BigDecimal.ZERO;  // Asignar saldo cero si es null
+        }
+
 
         if((tipoOperacion == 1 || tipoOperacion == 3) && saldoCuentaProductoDebito.compareTo(valorOperacion) < 0 ){
             throw new Exception("fondo insuficiente para retiro");
