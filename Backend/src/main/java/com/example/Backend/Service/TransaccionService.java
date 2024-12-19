@@ -37,7 +37,6 @@ public class TransaccionService extends BaseService<Transaccion> implements ITra
         productoService.actualizarSaldo(transaccion);
     }
     void operacionEntreMismaCuenta(Transaccion transaccion)throws Exception {
-        System.out.println("se valida cuentas para transferencia");
         if (transaccion.getTipoOperacion().getId() == 3 && transaccion.getProductoDebito().getNumeroCuenta().equals(transaccion.getProductoCredito().getNumeroCuenta())) {
             throw new Exception("No se puede realizar operaciones entre la misma cuenta");
         }

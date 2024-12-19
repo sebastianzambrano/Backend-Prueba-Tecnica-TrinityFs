@@ -2,94 +2,129 @@ package com.example.Backend.Service;
 
 import com.example.Backend.Entity.Cliente;
 import com.example.Backend.IRepository.IClienteRepository;
-import com.example.Backend.IRepository.IProductoRepository;
+import com.example.Backend.IService.IProductoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
+import java.time.Month;
+import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+
+@ExtendWith(MockitoExtension.class)
 public class ClienteServiceTest {
-
+    @Mock
+    private IClienteRepository clienteRepository;
+    @Mock
+    private IProductoService productoService;
     @InjectMocks
-    private ClienteService clienteService; // El servicio que estamos probando
-
-    @Mock
-    private IClienteRepository clienteRepository; // Mock del repositorio de clientes
-
-    @Mock
-    private IProductoRepository productoRepository; // Mock del repositorio de productos
-
+    private ClienteService clienteService;
     private Cliente cliente;
 
     @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
+    void setUp() {
         cliente = new Cliente();
+        cliente.setId(1L);
         cliente.setNombre("Juan");
-        cliente.setApellido("Perez");
-        cliente.setCorreoElectronico("juan.perez@mail.com");
-        cliente.setFechaNacimiento(LocalDate.of(2000, 1, 1)); // Edad mayor a 18 años
+        cliente.setApellido("Pérez");
+        cliente.setCorreoElectronico("juan.perez@dominio.com");
+        cliente.setFechaNacimiento(LocalDate.from(LocalDateTime.of(2000, Month.JANUARY, 1, 0, 0)));
+        cliente.setCreatedAt(LocalDateTime.now());
+        cliente.setUpdatedAt(LocalDateTime.now());
     }
 
     @Test
-    public void testSaveClienteSuccess() throws Exception {
-        // Configura el mock para que el repositorio simule guardar el cliente
-        when(clienteRepository.save(any(Cliente.class))).thenReturn(cliente);
+    void testSaveClienteValido() throws Exception {
+        // Simular el comportamiento del repository
+        Mockito.when(clienteRepository.save(any(Cliente.class))).thenReturn(cliente);
 
-        // Llamar al método que queremos probar
-        Cliente result = clienteService.save(cliente);
+        // Llamar al método de servicio
+        Cliente savedCliente = clienteService.save(cliente);
 
-        // Verificar que el resultado no es null y que el cliente guardado es el mismo que el esperado
-        assertNotNull(result);
-        assertEquals(cliente.getNombre(), result.getNombre());
-        assertEquals(cliente.getApellido(), result.getApellido());
-        verify(clienteRepository, times(1)).save(cliente); // Verifica que se haya llamado al repositorio una vez
+        // Validar resultados
+        assertNotNull(savedCliente);
+        assertEquals(cliente.getNombre(), savedCliente.getNombre());
+        assertEquals(cliente.getCorreoElectronico(), savedCliente.getCorreoElectronico());
     }
 
     @Test
-    public void testSaveClienteWithInvalidEmail() {
-        // Configurar un correo electrónico inválido
-        cliente.setCorreoElectronico("correo-invalido");
-
-        // Verificar que al intentar guardar el cliente con un correo inválido, se lanza una excepción
-        Exception exception = assertThrows(Exception.class, () -> clienteService.save(cliente));
-        assertEquals("El correo electrónico no tiene un formato válido (ejemplo: correo@dominio.com)", exception.getMessage());
-    }
-
-    @Test
-    public void testSaveClienteWithShortName() {
-        // Configurar un nombre corto
+    void testSaveClienteInvalidoPorNombre() {
+        // Modificar el cliente para que su nombre sea inválido
         cliente.setNombre("J");
+        cliente.setApellido("P");
 
-        // Verificar que al intentar guardar el cliente con un nombre corto, se lanza una excepción
-        Exception exception = assertThrows(Exception.class, () -> clienteService.save(cliente));
+        // Verificar que se lanza una excepción
+        Exception exception = assertThrows(Exception.class, () -> {
+            clienteService.save(cliente);
+        });
+
         assertEquals("El nombre debe tener al menos 2 caracteres", exception.getMessage());
     }
 
     @Test
-    public void testDeleteClienteWithNoAccounts() throws Exception {
-        // Simulamos que el cliente no tiene cuentas asociadas
-        when(productoRepository.contarCuentasByClienteId(cliente.getId())).thenReturn(0L);
+    void testDeleteClienteConCuentas() throws Exception {
+        // Simular que el cliente tiene cuentas asociadas
+        Mockito.when(productoService.contarCuentasByClienteId(cliente.getId())).thenReturn(1L);
 
-        // Verificar que el cliente se puede eliminar correctamente
-        clienteService.delete(cliente.getId());
+        // Verificar que se lanza una excepción porque el cliente tiene cuentas asociadas
+        Exception exception = assertThrows(Exception.class, () -> {
+            clienteService.delete(cliente.getId());
+        });
 
-        verify(clienteRepository, times(1)).deleteById(cliente.getId());
+        assertEquals("La persona tiene cuentas asociadas", exception.getMessage());
     }
 
     @Test
-    public void testDeleteClienteWithAccounts() {
-        // Simulamos que el cliente tiene cuentas asociadas
-        when(productoRepository.contarCuentasByClienteId(cliente.getId())).thenReturn(1L);
+    void testDeleteClienteSinCuentas() throws Exception {
+        // Simular que el cliente no tiene cuentas asociadas
+        Mockito.when(productoService.contarCuentasByClienteId(cliente.getId())).thenReturn(0L);
+        Mockito.when(clienteRepository.findById(cliente.getId())).thenReturn(Optional.of(cliente));
 
-        // Verificar que al intentar eliminar un cliente con cuentas asociadas, se lanza una excepción
-        Exception exception = assertThrows(Exception.class, () -> clienteService.delete(cliente.getId()));
-        assertEquals("La persona tiene cuentas asociadas", exception.getMessage());
+        // Llamar al método delete
+        clienteService.delete(cliente.getId());
+
+        // Verificar que el método delete en el repository se haya llamado
+        Mockito.verify(clienteRepository, Mockito.times(1)).save(any(Cliente.class));
+    }
+
+    @Test
+    void testValidarCorreoElectronicoValido() {
+        boolean esValido = clienteService.esCorreoElectronicoValido("juan.perez@dominio.com");
+        assertTrue(esValido);
+    }
+
+    @Test
+    void testValidarCorreoElectronicoInvalido() {
+        boolean esValido = clienteService.esCorreoElectronicoValido("juan.perez@dominio");
+        assertFalse(esValido);
+    }
+
+    @Test
+    void testCalcularEdad() {
+        LocalDateTime fechaNacimiento = LocalDateTime.of(2000, Month.JANUARY, 1, 0, 0);
+        Integer edad = clienteService.calcularEdad(fechaNacimiento);
+        assertEquals(24, edad);  // Suponiendo que la prueba se hace en 2024
+    }
+
+    @Test
+    void testValidarEdadClienteMenorDe18() {
+        cliente.setFechaNacimiento(LocalDate.from(LocalDateTime.of(2010, Month.JANUARY, 1, 0, 0)));
+
+        // Verificar que se lanza una excepción
+        Exception exception = assertThrows(Exception.class, () -> {
+            clienteService.save(cliente);
+        });
+
+        assertEquals("La edad de la persona debe ser igual o superior a 18 años", exception.getMessage());
     }
 }

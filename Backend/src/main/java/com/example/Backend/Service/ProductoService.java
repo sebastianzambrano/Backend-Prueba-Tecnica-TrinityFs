@@ -133,7 +133,6 @@ public class ProductoService extends BaseService<Producto> implements IProductoS
     public void validarTipoCuenta(Producto producto) throws Exception {
         List<Long> tiposCuentas = repository.findAllIdsByTipoCuentaId();
         if (!tiposCuentas.contains(producto.getTipoCuenta().getId())){
-            System.out.print("tipo de cuenta" + producto.getTipoCuenta().getId());
             throw new Exception("Tipo de cuenta erroneo");
         }
     }

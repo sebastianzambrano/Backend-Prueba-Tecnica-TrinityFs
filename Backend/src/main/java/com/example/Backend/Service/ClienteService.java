@@ -25,9 +25,8 @@ public class ClienteService extends BaseService<Cliente> implements IClienteServ
     @Transactional
     @Override
     public void delete(Long id)throws Exception{
-        System.out.println("se esta eliminando cliente");
-        System.out.println("valor igual: " + productoService.contarCuentasByClienteId(id));
-        if(productoService.contarCuentasByClienteId(id)>0){
+        Long cuentas = productoService.contarCuentasByClienteId(id);
+        if(cuentas>0){
             throw new Exception("La persona tiene cuentas asociadas");}
 
         super.delete(id);
@@ -40,7 +39,7 @@ public class ClienteService extends BaseService<Cliente> implements IClienteServ
         cliente.setUpdatedAt(LocalDateTime.now());
         return super.save(cliente);
     }
-    private void validarCliente(Cliente cliente) throws Exception {
+    public void validarCliente(Cliente cliente) throws Exception {
 
         if (cliente.getNombre() == null || cliente.getNombre().length() < 2) {
             throw new Exception("El nombre debe tener al menos 2 caracteres");
@@ -58,12 +57,12 @@ public class ClienteService extends BaseService<Cliente> implements IClienteServ
             throw  new Exception("La edad de la persona debe ser igual o superior a 18 años");
         }
     }
-    private boolean esCorreoElectronicoValido(String correoElectronico) {
+    public boolean esCorreoElectronicoValido(String correoElectronico) {
         String regexCorreo = "^[\\w-    \\.]+@([\\w-]+\\.)+[\\w-]{2,4}$";
         Pattern pattern = Pattern.compile(regexCorreo);
         return pattern.matcher(correoElectronico).matches();
     }
-    private Integer calcularEdad(LocalDateTime fechaNacimiento){
+    public Integer calcularEdad(LocalDateTime fechaNacimiento){
         LocalDate fechaNacimientoLocalDate = fechaNacimiento.toLocalDate();
         LocalDate fechaActual = LocalDate.now();
         return Period.between(fechaNacimientoLocalDate, fechaActual).getYears();
